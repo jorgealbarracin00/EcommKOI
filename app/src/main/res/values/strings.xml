@@ -1,3 +1,7 @@
+
 <resources>
     <string name="app_name">EcommKOI</string>
+    <string name="fab_description">Add a new product</string>
+
 </resources>
+                

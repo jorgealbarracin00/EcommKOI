@@ -1,47 +1,33 @@
 package com.example.ecommkoi
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.ecommkoi.ui.theme.EcommKOITheme
+import android.content.Intent
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
+import androidx.room.Room
+import com.example.ecommkoi.R
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            EcommKOITheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+        setContentView(R.layout.activity_main)
+
+        // Find the start button and set an OnClickListener
+        val startButton = findViewById<Button>(R.id.startButton)
+        startButton.setOnClickListener {
+            // Navigate to HomeActivity
+            startActivity(Intent(this, HomeActivity::class.java))
         }
-    }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+        // Initialize the Room database
+        val database = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java, "ecommkoi-database"
+        ).allowMainThreadQueries() // Allow main thread queries for simplicity
+            .build()
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    EcommKOITheme {
-        Greeting("Android")
+        // Example: Insert a user (only for testing)
+        val dao = database.dao()
+        dao.insertUser(User(name = "John Doe", email = "john@example.com", password = "password"))
     }
 }
