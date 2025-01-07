@@ -17,10 +17,19 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var productAdapter: ProductAdapter
     private lateinit var products: List<Product> // Store the original product list
+    private var loggedInUserId: Int = -1 // Store the logged-in user's ID
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+
+        // Retrieve the logged-in user's ID from the intent
+        loggedInUserId = intent.getIntExtra("userId", -1)
+        if (loggedInUserId == -1) {
+            Toast.makeText(this, "Error: User not logged in.", Toast.LENGTH_SHORT).show()
+            finish() // Exit if userId is invalid
+            return
+        }
 
         // Product list
         products = listOf(
@@ -96,6 +105,7 @@ class HomeActivity : AppCompatActivity() {
             putExtra("productDescription", product.description)
             putExtra("productPrice", product.price)
             putExtra("productImageResId", product.imageResId)
+            putExtra("userId", loggedInUserId) // Pass the logged-in user's ID
         }
         startActivity(intent)
     }

@@ -33,7 +33,7 @@ class LoginActivity : AppCompatActivity() {
             if (validateInput(email, password)) {
                 val user = dao.getUser(email, password)
                 if (user != null) {
-                    navigateToHome()
+                    navigateToHome(user.id) // Pass the user ID
                 } else {
                     showToast("Invalid credentials. Please try again.")
                 }
@@ -63,9 +63,11 @@ class LoginActivity : AppCompatActivity() {
         return true
     }
 
-    // Navigate to HomeActivity
-    private fun navigateToHome() {
-        val intent = Intent(this, HomeActivity::class.java)
+    // Navigate to HomeActivity and pass the userId
+    private fun navigateToHome(userId: Int) {
+        val intent = Intent(this, HomeActivity::class.java).apply {
+            putExtra("userId", userId) // Pass the logged-in user's ID
+        }
         startActivity(intent)
         finish() // Close LoginActivity
     }
