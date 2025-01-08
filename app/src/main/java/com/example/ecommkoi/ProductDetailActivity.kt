@@ -1,12 +1,17 @@
 package com.example.ecommkoi
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ProductDetailActivity : AppCompatActivity() {
     private var quantity = 1
@@ -64,8 +69,8 @@ class ProductDetailActivity : AppCompatActivity() {
         val database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java, "ecommkoi-database"
-        ).allowMainThreadQueries().build()
-        val dao = database.dao()
+        ).build()
+        val dao = database.userDao()
 
         // Handle Add to Cart button
         btnAddToCart.setOnClickListener {
@@ -75,9 +80,30 @@ class ProductDetailActivity : AppCompatActivity() {
             }
             val totalPrice = quantity * price // Calculate total price
             val order = Order(userId = userId, productId = productId, quantity = quantity, totalPrice = totalPrice)
-            dao.insertOrder(order)
-            Toast.makeText(this, "Added $quantity of $name to the cart. Total: $$totalPrice", Toast.LENGTH_SHORT).show()
-            finish() // Close the detail page
+
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    dao.insertOrder(order)
+                    Log.d("DatabaseDebug", "Inserted Order: $order")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@ProductDetailActivity,
+                            "Added $quantity of $name to the cart. Total: $$totalPrice",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        finish() // Close the detail page
+                    }
+                } catch (e: Exception) {
+                    Log.e("DatabaseDebug", "Error inserting order: ${e.message}", e)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@ProductDetailActivity,
+                            "Failed to add item to cart. Please try again.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
         }
     }
 }

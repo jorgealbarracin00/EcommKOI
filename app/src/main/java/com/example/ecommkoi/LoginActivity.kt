@@ -2,12 +2,16 @@ package com.example.ecommkoi
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.room.Room
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class LoginActivity : AppCompatActivity() {
 
@@ -23,7 +27,8 @@ class LoginActivity : AppCompatActivity() {
 
         // Initialize Room database
         val database = AppDatabase.getDatabase(applicationContext)
-        val dao = database.dao()
+        val dao = database.userDao()
+        Log.d("DatabaseDebug", "DAO accessed: $dao")
 
         // Login Button Listener
         loginButton.setOnClickListener {
@@ -31,11 +36,17 @@ class LoginActivity : AppCompatActivity() {
             val password = passwordField.text.toString().trim()
 
             if (validateInput(email, password)) {
-                val user = dao.getUser(email, password)
-                if (user != null) {
-                    navigateToHome(user.id) // Pass the user ID
-                } else {
-                    showToast("Invalid credentials. Please try again.")
+                CoroutineScope(Dispatchers.IO).launch {
+                    val user = dao.getUser(email, password)
+                    withContext(Dispatchers.Main) {
+                        if (user != null) {
+                            Log.d("DatabaseDebug", "User found: ${user.name}")
+                            navigateToHome(user.id)
+                        } else {
+                            Log.d("DatabaseDebug", "No user found for email: $email")
+                            showToast("Invalid credentials. Please try again.")
+                        }
+                    }
                 }
             }
         }

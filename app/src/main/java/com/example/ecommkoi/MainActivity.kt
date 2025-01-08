@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         // Example: Insert a user (only for testing)
-        val dao = database.dao()
+        val dao = database.userDao()
         dao.insertUser(User(name = "John Doe", email = "john@example.com", password = "password"))
     }
 }

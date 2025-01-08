@@ -3,20 +3,25 @@ package com.example.ecommkoi
 import ProductAdapter
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
-import android.widget.SearchView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var productAdapter: ProductAdapter
-    private lateinit var products: List<Product> // Store the original product list
+    private var products: List<Product> = listOf() // Initialize with an empty list
     private var loggedInUserId: Int = -1 // Store the logged-in user's ID
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,35 +36,12 @@ class HomeActivity : AppCompatActivity() {
             return
         }
 
-        // Product list
-        products = listOf(
-            Product(1, "Toy 1", "Handmade wooden toy", 25.0, R.drawable.toy1),
-            Product(2, "Toy 2", "Handcrafted stuffed toy", 30.0, R.drawable.toy2),
-            Product(3, "Toy 3", "Artisanal painted toy", 20.0, R.drawable.toy3)
-        )
+        // Set up Toolbar
+        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
 
-        // Set up RecyclerView
-        recyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = GridLayoutManager(this, 2)
-
-        // Adapter with click listener
-        productAdapter = ProductAdapter(products) { product ->
-            navigateToProductDetail(product)
-        }
-        recyclerView.adapter = productAdapter
-
-        // Set up SearchView
-        val searchView = findViewById<SearchView>(R.id.searchView)
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean = true
-            override fun onQueryTextChange(newText: String?): Boolean {
-                val filteredProducts = products.filter {
-                    it.name.contains(newText ?: "", ignoreCase = true)
-                }
-                updateRecyclerView(filteredProducts)
-                return true
-            }
-        })
+        // Initialize products asynchronously
+        initializeProducts()
 
         // Set up FAB for filter options
         val fab = findViewById<FloatingActionButton>(R.id.fab)
@@ -68,12 +50,44 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // Open filter options using a BottomSheetDialog
+    private fun initializeProducts() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val database = AppDatabase.getDatabase(applicationContext)
+            val dao = database.userDao()
+
+            // Check if products are already in the database
+            if (dao.getAllProducts().isEmpty()) {
+                val productsToInsert = listOf(
+                    Product(1, "Toy 1", "Handmade wooden toy", 25.0, R.drawable.toy1),
+                    Product(2, "Toy 2", "Handcrafted stuffed toy", 30.0, R.drawable.toy2),
+                    Product(3, "Toy 3", "Artisanal painted toy", 20.0, R.drawable.toy3)
+                )
+                dao.insertProducts(productsToInsert)
+            }
+
+            // Fetch products from the database
+            products = dao.getAllProducts()
+
+            // Update the RecyclerView on the main thread
+            withContext(Dispatchers.Main) {
+                setupRecyclerView()
+            }
+        }
+    }
+
+    private fun setupRecyclerView() {
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = GridLayoutManager(this, 2)
+        productAdapter = ProductAdapter(products) { product ->
+            navigateToProductDetail(product)
+        }
+        recyclerView.adapter = productAdapter
+    }
+
     private fun openFilterOptions() {
         val bottomSheetDialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.layout_filter_options, null)
 
-        // Set up filter option buttons
         view.findViewById<Button>(R.id.btnFilterByPrice).setOnClickListener {
             val filteredProducts = products.sortedBy { it.price }
             updateRecyclerView(filteredProducts)
@@ -82,13 +96,12 @@ class HomeActivity : AppCompatActivity() {
         }
 
         view.findViewById<Button>(R.id.btnFilterByCategory).setOnClickListener {
-            // Example: Filter logic for category (add categories to your Product model if needed)
             Toast.makeText(this, "Filtered by Category", Toast.LENGTH_SHORT).show()
             bottomSheetDialog.dismiss()
         }
 
         view.findViewById<Button>(R.id.btnClearFilters).setOnClickListener {
-            updateRecyclerView(products) // Reset to original product list
+            updateRecyclerView(products)
             Toast.makeText(this, "Filters cleared", Toast.LENGTH_SHORT).show()
             bottomSheetDialog.dismiss()
         }
@@ -97,7 +110,35 @@ class HomeActivity : AppCompatActivity() {
         bottomSheetDialog.show()
     }
 
-    // Navigate to ProductDetailActivity with product details
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_home, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_cart -> {
+                navigateToCart()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun navigateToCart() {
+        val intent = Intent(this, CartActivity::class.java).apply {
+            putExtra("userId", loggedInUserId)
+        }
+        startActivity(intent)
+    }
+
+    private fun updateRecyclerView(filteredProducts: List<Product>) {
+        productAdapter = ProductAdapter(filteredProducts) { product ->
+            navigateToProductDetail(product)
+        }
+        recyclerView.adapter = productAdapter
+    }
+
     private fun navigateToProductDetail(product: Product) {
         val intent = Intent(this, ProductDetailActivity::class.java).apply {
             putExtra("productId", product.id)
@@ -105,16 +146,8 @@ class HomeActivity : AppCompatActivity() {
             putExtra("productDescription", product.description)
             putExtra("productPrice", product.price)
             putExtra("productImageResId", product.imageResId)
-            putExtra("userId", loggedInUserId) // Pass the logged-in user's ID
+            putExtra("userId", loggedInUserId)
         }
         startActivity(intent)
-    }
-
-    // Update RecyclerView with filtered products
-    private fun updateRecyclerView(filteredProducts: List<Product>) {
-        productAdapter = ProductAdapter(filteredProducts) { product ->
-            navigateToProductDetail(product)
-        }
-        recyclerView.adapter = productAdapter
     }
 }
