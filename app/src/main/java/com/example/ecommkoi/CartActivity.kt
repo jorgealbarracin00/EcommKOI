@@ -17,9 +17,6 @@ class CartActivity : AppCompatActivity() {
     private lateinit var cartAdapter: CartAdapter
     private var loggedInUserId: Int = -1
 
-    // Reference to the DAO
-    private val dao by lazy { AppDatabase.getDatabase(applicationContext).userDao() }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cart)
@@ -36,26 +33,30 @@ class CartActivity : AppCompatActivity() {
         cartRecyclerView = findViewById(R.id.rvCartItems)
         cartRecyclerView.layoutManager = LinearLayoutManager(this)
 
-        // Attach an empty adapter initially to avoid the error
-        cartAdapter = CartAdapter(emptyList())
+        // Attach an empty adapter initially
+        cartAdapter = CartAdapter(emptyList()) { cartItem ->
+            removeItemFromCart(cartItem)
+        }
         cartRecyclerView.adapter = cartAdapter
 
-        // Load cart items asynchronously
+        // Load cart items
         loadCartItems()
     }
 
     private fun loadCartItems() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Fetch cart items for the logged-in user
-                val cartItems = dao.getCartItemsForUser(loggedInUserId)
+                val database = AppDatabase.getDatabase(applicationContext)
+                val cartItems = database.userDao().getCartItemsForUser(loggedInUserId)
 
                 withContext(Dispatchers.Main) {
                     if (cartItems.isEmpty()) {
                         Toast.makeText(this@CartActivity, "Your cart is empty.", Toast.LENGTH_SHORT).show()
                     } else {
                         // Update adapter with cart items
-                        cartAdapter = CartAdapter(cartItems)
+                        cartAdapter = CartAdapter(cartItems) { cartItem ->
+                            removeItemFromCart(cartItem)
+                        }
                         cartRecyclerView.adapter = cartAdapter
                     }
 
@@ -67,6 +68,23 @@ class CartActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@CartActivity, "Error loading cart items.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun removeItemFromCart(cartItem: CartItem) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val database = AppDatabase.getDatabase(applicationContext)
+                database.userDao().deleteOrder(cartItem.orderId)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@CartActivity, "${cartItem.productName} removed from cart.", Toast.LENGTH_SHORT).show()
+                    loadCartItems() // Reload cart items
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@CartActivity, "Error removing item from cart.", Toast.LENGTH_SHORT).show()
                 }
             }
         }

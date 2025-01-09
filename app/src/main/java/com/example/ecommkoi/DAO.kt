@@ -37,4 +37,8 @@ interface UserDAO {
     // Order-related operations
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertOrder(order: Order) // Insert a single order
+
+    @Query("DELETE FROM orders WHERE id = :orderId")
+    fun deleteOrder(orderId: Int)
+
 }
