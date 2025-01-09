@@ -41,4 +41,7 @@ interface UserDAO {
     @Query("DELETE FROM orders WHERE id = :orderId")
     fun deleteOrder(orderId: Int)
 
+    @Query("DELETE FROM orders WHERE userId = :userId")
+    fun deleteOrdersByUser(userId: Int)
+
 }

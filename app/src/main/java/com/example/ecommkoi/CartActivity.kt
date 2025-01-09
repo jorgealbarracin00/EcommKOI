@@ -1,6 +1,8 @@
 package com.example.ecommkoi
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -41,6 +43,17 @@ class CartActivity : AppCompatActivity() {
 
         // Load cart items
         loadCartItems()
+
+        // Handle Checkout button
+        val btnCheckout = findViewById<Button>(R.id.btnCheckout)
+        btnCheckout.setOnClickListener {
+            // Navigate to CheckoutActivity
+            val intent = Intent(this, CheckoutActivity::class.java).apply {
+                putExtra("userId", loggedInUserId)
+            }
+            startActivity(intent)
+        }
+
     }
 
     private fun loadCartItems() {
@@ -89,4 +102,12 @@ class CartActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun checkoutCart() {
+        val intent = Intent(this, CheckoutActivity::class.java).apply {
+            putExtra("userId", loggedInUserId) // Pass user ID to CheckoutActivity
+        }
+        startActivity(intent)
+    }
+
 }
