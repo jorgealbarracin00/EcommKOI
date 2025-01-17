@@ -18,6 +18,7 @@
         <activity android:name=".ProductDetailActivity" android:exported="false" />
         <activity android:name=".CartActivity" android:exported="false" />
         <activity android:name=".CheckoutActivity" android:exported="false" />
+        <activity android:name=".ThankYouActivity" android:theme="@style/Theme.EcommKOI"/>
 
     </application>
 </manifest>

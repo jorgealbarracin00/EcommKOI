@@ -1,6 +1,8 @@
 package com.example.ecommkoi
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.CoroutineScope
@@ -60,21 +62,33 @@ class CheckoutActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                Log.d("CheckoutActivity", "Getting database instance...")
                 val database = AppDatabase.getDatabase(applicationContext)
-                // Simulate clearing the cart after order placement
+                Log.d("CheckoutActivity", "Database instance retrieved.")
+
+                Log.d("CheckoutActivity", "Deleting orders for userId: $loggedInUserId")
                 database.userDao().deleteOrdersByUser(loggedInUserId)
+                Log.d("CheckoutActivity", "Orders deleted successfully.")
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@CheckoutActivity,
-                        "Order placed successfully! \nAddress: $address \nPayment: $selectedPaymentMethod",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    finish() // Close the activity after placing the order
+                    Log.d("CheckoutActivity", "Navigating to ThankYouActivity.")
+
+                    // Show success message
+                    Toast.makeText(this@CheckoutActivity, "Order placed successfully!", Toast.LENGTH_LONG).show()
+
+                    // Navigate to ThankYouActivity and pass userId
+                    val intent = Intent(this@CheckoutActivity, ThankYouActivity::class.java).apply {
+                        putExtra("userId", loggedInUserId) // Pass userId
+                    }
+                    startActivity(intent)
+
+                    // Close CheckoutActivity
+                    finish()
                 }
             } catch (e: Exception) {
+                Log.e("CheckoutActivity", "Error placing order: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@CheckoutActivity, "Error placing order.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CheckoutActivity, "Error placing order: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }

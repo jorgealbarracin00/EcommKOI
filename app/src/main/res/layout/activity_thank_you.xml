@@ -1,0 +1,25 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@android:color/white">
+
+    <!-- Thank You Image -->
+    <ImageView
+        android:id="@+id/ivThankYou"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:src="@drawable/ic_thankyou" />
+
+    <!-- Thank You Message -->
+    <TextView
+        android:id="@+id/tvThankYouMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Thank You for Your Order!"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp" />
+</LinearLayout>

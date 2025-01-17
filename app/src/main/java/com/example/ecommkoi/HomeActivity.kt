@@ -3,6 +3,7 @@ package com.example.ecommkoi
 import ProductAdapter
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
@@ -28,11 +29,11 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        // Retrieve the logged-in user's ID from the intent
+        // Retrieve logged-in user ID
         loggedInUserId = intent.getIntExtra("userId", -1)
         if (loggedInUserId == -1) {
             Toast.makeText(this, "Error: User not logged in.", Toast.LENGTH_SHORT).show()
-            finish() // Exit if userId is invalid
+            finish()
             return
         }
 
@@ -40,50 +41,64 @@ class HomeActivity : AppCompatActivity() {
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        // Initialize products asynchronously
-        initializeProducts()
+        // Initialize RecyclerView
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = GridLayoutManager(this, 2)
 
-        // Set up FAB for filter options
+        // Load Products from Database
+        loadProducts()
+
+        // Set up Floating Action Button (FAB) for filter options
         val fab = findViewById<FloatingActionButton>(R.id.fab)
         fab.setOnClickListener {
             openFilterOptions()
         }
     }
 
-    private fun initializeProducts() {
+    /** Load Products from Database **/
+    private fun loadProducts() {
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(applicationContext)
             val dao = database.userDao()
 
-            // Check if products are already in the database
-            if (dao.getAllProducts().isEmpty()) {
+            Log.d("HomeActivity", "Fetching products from database...")
+            val existingProducts = dao.getAllProducts()
+
+            if (existingProducts.isEmpty()) {
+                Log.d("HomeActivity", "No products found. Inserting default products...")
                 val productsToInsert = listOf(
                     Product(1, "Toy 1", "Handmade wooden toy", 25.0, R.drawable.toy1),
                     Product(2, "Toy 2", "Handcrafted stuffed toy", 30.0, R.drawable.toy2),
                     Product(3, "Toy 3", "Artisanal painted toy", 20.0, R.drawable.toy3)
                 )
                 dao.insertProducts(productsToInsert)
+                products = productsToInsert
+            } else {
+                products = existingProducts
             }
 
-            // Fetch products from the database
-            products = dao.getAllProducts()
+            Log.d("HomeActivity", "Products loaded: ${products.size}")
 
-            // Update the RecyclerView on the main thread
             withContext(Dispatchers.Main) {
                 setupRecyclerView()
             }
         }
     }
 
+    /** Set up RecyclerView with the Product List **/
     private fun setupRecyclerView() {
-        recyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = GridLayoutManager(this, 2)
+        if (products.isEmpty()) {
+            Toast.makeText(this, "No products available.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         productAdapter = ProductAdapter(products) { product ->
             navigateToProductDetail(product)
         }
         recyclerView.adapter = productAdapter
     }
 
+    /** Open Bottom Sheet for Filtering Options **/
     private fun openFilterOptions() {
         val bottomSheetDialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.layout_filter_options, null)
@@ -110,6 +125,7 @@ class HomeActivity : AppCompatActivity() {
         bottomSheetDialog.show()
     }
 
+    /** Handle Menu Options **/
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_home, menu)
         return true
@@ -125,6 +141,7 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    /** Navigate to Cart **/
     private fun navigateToCart() {
         val intent = Intent(this, CartActivity::class.java).apply {
             putExtra("userId", loggedInUserId)
@@ -132,6 +149,7 @@ class HomeActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    /** Update RecyclerView with Filtered Products **/
     private fun updateRecyclerView(filteredProducts: List<Product>) {
         productAdapter = ProductAdapter(filteredProducts) { product ->
             navigateToProductDetail(product)
@@ -139,6 +157,7 @@ class HomeActivity : AppCompatActivity() {
         recyclerView.adapter = productAdapter
     }
 
+    /** Navigate to Product Detail Page **/
     private fun navigateToProductDetail(product: Product) {
         val intent = Intent(this, ProductDetailActivity::class.java).apply {
             putExtra("productId", product.id)
