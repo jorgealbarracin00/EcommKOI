@@ -1,7 +1,6 @@
 package com.example.ecommkoi
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -42,9 +41,15 @@ class PurchaseHistoryActivity : AppCompatActivity() {
             val database = AppDatabase.getDatabase(applicationContext)
             val userDao = database.userDao()
 
-            // ✅ Fetch & Sort Orders
+            // ✅ Fetch orders for the last 6 months
             val pastOrders = userDao.getOrdersByUserLastSixMonths(loggedInUserId)
-            val sortedOrders = pastOrders.sortedByDescending { it.orderDate } // Explicitly sort by date
+
+            // ✅ Group by `orderSessionId` and flatten into a sorted list
+            val sortedOrders = pastOrders
+                .groupBy { it.orderSessionId }
+                .values
+                .flatten()
+                .sortedByDescending { it.orderSessionId } // Keep recent grouped orders first
 
             withContext(Dispatchers.Main) {
                 if (sortedOrders.isEmpty()) {
@@ -52,7 +57,6 @@ class PurchaseHistoryActivity : AppCompatActivity() {
                 } else {
                     purchaseHistoryAdapter = PurchaseHistoryAdapter(sortedOrders)
                     recyclerView.adapter = purchaseHistoryAdapter
-                    purchaseHistoryAdapter.notifyDataSetChanged()
                 }
             }
         }

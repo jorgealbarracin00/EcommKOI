@@ -29,7 +29,14 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
+// ✅ Retrieve userId from intent
+        loggedInUserId = intent.getIntExtra("userId", -1)
 
+        if (loggedInUserId == -1) {
+            Toast.makeText(this, "Error: User not logged in.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
 
 
 

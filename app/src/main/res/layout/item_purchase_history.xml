@@ -7,6 +7,15 @@
     android:padding="12dp"
     android:background="@android:color/white">
 
+    <TextView
+        android:id="@+id/tvOrderGroupHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Order #12345"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:padding="8dp"/>
+
     <!-- Order Date -->
     <TextView
         android:id="@+id/tvOrderDate"

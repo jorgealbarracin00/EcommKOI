@@ -20,7 +20,7 @@ class CartActivity : AppCompatActivity() {
     private lateinit var cartAdapter: CartAdapter
     private lateinit var totalPriceTextView: TextView
     private var loggedInUserId: Int = -1
-    private var cartItems: MutableList<CartItem> = mutableListOf() // Use mutable list for updates
+    private var cartItems: MutableList<CartItem> = mutableListOf() // Mutable list for updates
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,16 +64,16 @@ class CartActivity : AppCompatActivity() {
             Log.d("CartDebug", "Cart query returned ${items.size} items")
 
             withContext(Dispatchers.Main) {
-                cartItems.clear()
-                cartItems.addAll(items)
-                cartAdapter.notifyDataSetChanged() // Refresh RecyclerView
+                if (items.isEmpty()) {
+                    Toast.makeText(this@CartActivity, "Your cart is empty.", Toast.LENGTH_SHORT).show()
+                } else {
+                    cartItems.clear()
+                    cartItems.addAll(items)
+                    cartAdapter.notifyDataSetChanged() // Refresh RecyclerView
+                }
 
                 // ✅ Calculate & Update Total Price
                 updateTotalPrice()
-
-                if (cartItems.isEmpty()) {
-                    Toast.makeText(this@CartActivity, "Your cart is empty.", Toast.LENGTH_SHORT).show()
-                }
             }
         }
     }
@@ -85,11 +85,9 @@ class CartActivity : AppCompatActivity() {
                 database.userDao().deleteOrder(cartItem.orderId)
 
                 withContext(Dispatchers.Main) {
-                    val position = cartItems.indexOf(cartItem)
-                    if (position != -1) {
-                        cartItems.removeAt(position)
-                        cartAdapter.notifyItemRemoved(position) // Optimized RecyclerView update
-                    }
+                    cartItems.remove(cartItem)
+                    cartAdapter.notifyDataSetChanged() // Ensure RecyclerView updates
+
                     updateTotalPrice() // Recalculate total price
                     Toast.makeText(this@CartActivity, "${cartItem.productName} removed.", Toast.LENGTH_SHORT).show()
                 }

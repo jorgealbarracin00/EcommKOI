@@ -5,5 +5,7 @@ data class CartItem(
     val quantity: Int,
     val productName: String,
     val productPrice: Double,
-    val productImage: Int
+    val productImage: Int,
+    val productId: Int // ✅ Ensure this exists
+
 )

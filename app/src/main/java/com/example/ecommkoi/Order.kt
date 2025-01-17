@@ -12,7 +12,9 @@ data class Order(
     val quantity: Int,
     val totalPrice: Double,
     val orderDate: Long = System.currentTimeMillis(), // Store timestamp
-    val status: String = "pending" // Default status is pending
+    val status: String = "pending",
+    val orderSessionId: Long // New: Group orders together
+// Default status is pending
 
 
 )

@@ -17,11 +17,12 @@ interface UserDAO {
 
     // ✅ Cart-related operations
     @Query("""
-        SELECT o.id AS orderId, o.quantity, p.name AS productName, p.price AS productPrice, p.imageResId AS productImage
-        FROM orders o
-        INNER JOIN products p ON o.productId = p.id
-        WHERE o.userId = :userId
-    """)
+    SELECT o.id AS orderId, o.quantity, p.id AS productId, p.name AS productName, 
+           p.price AS productPrice, p.imageResId AS productImage
+    FROM orders o
+    INNER JOIN products p ON o.productId = p.id
+    WHERE o.userId = :userId
+""")
     fun getCartItemsForUser(userId: Int): List<CartItem>
 
     // ✅ Product-related operations
@@ -49,7 +50,7 @@ interface UserDAO {
     SELECT * FROM orders
     WHERE userId = :userId
     AND orderDate >= strftime('%s', 'now', '-6 months') * 1000
-    ORDER BY orderDate DESC
+    ORDER BY orderSessionId DESC, orderDate DESC
 """)
     fun getOrdersByUserLastSixMonths(userId: Int): List<Order>
 
@@ -63,4 +64,11 @@ interface UserDAO {
         AND orderDate >= (:currentTime - (6 * 30 * 24 * 60 * 60 * 1000))
     """)
     fun getPurchaseHistory(userId: Int, currentTime: Long): List<Order>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertOrders(orders: List<Order>)
+
+    @Query("SELECT * FROM orders WHERE orderSessionId = :sessionId")
+    fun getOrdersBySession(sessionId: Long): List<Order> // ✅ Use Long
+
 }
