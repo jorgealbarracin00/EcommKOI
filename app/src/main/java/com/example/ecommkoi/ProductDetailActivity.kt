@@ -79,7 +79,7 @@ class ProductDetailActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             val totalPrice = quantity * price // Calculate total price
-            val order = Order(userId = userId, productId = productId, quantity = quantity, totalPrice = totalPrice)
+            val order = Order(userId = userId, productId = productId, quantity = quantity, totalPrice = totalPrice, productName = name)
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {

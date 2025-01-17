@@ -2,6 +2,7 @@ package com.example.ecommkoi
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -17,13 +18,15 @@ class CartActivity : AppCompatActivity() {
 
     private lateinit var cartRecyclerView: RecyclerView
     private lateinit var cartAdapter: CartAdapter
+    private lateinit var totalPriceTextView: TextView
     private var loggedInUserId: Int = -1
+    private var cartItems: MutableList<CartItem> = mutableListOf() // Use mutable list for updates
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cart)
 
-        // Retrieve the logged-in user's ID
+        // Retrieve logged-in user ID
         loggedInUserId = intent.getIntExtra("userId", -1)
         if (loggedInUserId == -1) {
             Toast.makeText(this, "Error: User not logged in.", Toast.LENGTH_SHORT).show()
@@ -31,14 +34,13 @@ class CartActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize RecyclerView
+        // Initialize UI components
         cartRecyclerView = findViewById(R.id.rvCartItems)
         cartRecyclerView.layoutManager = LinearLayoutManager(this)
+        totalPriceTextView = findViewById(R.id.tvTotalPrice)
 
         // Attach an empty adapter initially
-        cartAdapter = CartAdapter(emptyList()) { cartItem ->
-            removeItemFromCart(cartItem)
-        }
+        cartAdapter = CartAdapter(cartItems) { cartItem -> removeItemFromCart(cartItem) }
         cartRecyclerView.adapter = cartAdapter
 
         // Load cart items
@@ -47,40 +49,30 @@ class CartActivity : AppCompatActivity() {
         // Handle Checkout button
         val btnCheckout = findViewById<Button>(R.id.btnCheckout)
         btnCheckout.setOnClickListener {
-            // Navigate to CheckoutActivity
-            val intent = Intent(this, CheckoutActivity::class.java).apply {
-                putExtra("userId", loggedInUserId)
-            }
-            startActivity(intent)
+            checkoutCart()
         }
-
     }
 
     private fun loadCartItems() {
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val database = AppDatabase.getDatabase(applicationContext)
-                val cartItems = database.userDao().getCartItemsForUser(loggedInUserId)
+            val database = AppDatabase.getDatabase(applicationContext)
+            val dao = database.userDao()
 
-                withContext(Dispatchers.Main) {
-                    if (cartItems.isEmpty()) {
-                        Toast.makeText(this@CartActivity, "Your cart is empty.", Toast.LENGTH_SHORT).show()
-                    } else {
-                        // Update adapter with cart items
-                        cartAdapter = CartAdapter(cartItems) { cartItem ->
-                            removeItemFromCart(cartItem)
-                        }
-                        cartRecyclerView.adapter = cartAdapter
-                    }
+            // ✅ Log when fetching cart items
+            Log.d("CartDebug", "Fetching cart items for userId: $loggedInUserId")
+            val items = dao.getCartItemsForUser(loggedInUserId)
+            Log.d("CartDebug", "Cart query returned ${items.size} items")
 
-                    // Calculate and display total price
-                    val totalPriceTextView = findViewById<TextView>(R.id.tvTotalPrice)
-                    val totalPrice = cartItems.sumOf { it.quantity * it.productPrice }
-                    totalPriceTextView.text = "Total: $$totalPrice"
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@CartActivity, "Error loading cart items.", Toast.LENGTH_SHORT).show()
+            withContext(Dispatchers.Main) {
+                cartItems.clear()
+                cartItems.addAll(items)
+                cartAdapter.notifyDataSetChanged() // Refresh RecyclerView
+
+                // ✅ Calculate & Update Total Price
+                updateTotalPrice()
+
+                if (cartItems.isEmpty()) {
+                    Toast.makeText(this@CartActivity, "Your cart is empty.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -91,23 +83,39 @@ class CartActivity : AppCompatActivity() {
             try {
                 val database = AppDatabase.getDatabase(applicationContext)
                 database.userDao().deleteOrder(cartItem.orderId)
+
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@CartActivity, "${cartItem.productName} removed from cart.", Toast.LENGTH_SHORT).show()
-                    loadCartItems() // Reload cart items
+                    val position = cartItems.indexOf(cartItem)
+                    if (position != -1) {
+                        cartItems.removeAt(position)
+                        cartAdapter.notifyItemRemoved(position) // Optimized RecyclerView update
+                    }
+                    updateTotalPrice() // Recalculate total price
+                    Toast.makeText(this@CartActivity, "${cartItem.productName} removed.", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@CartActivity, "Error removing item from cart.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@CartActivity, "Error removing item.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
+    private fun updateTotalPrice() {
+        val totalPrice = cartItems.sumOf { it.quantity * it.productPrice }
+        totalPriceTextView.text = "Total: $%.2f".format(totalPrice)
+        Log.d("CartDebug", "Updated Total Price: $$totalPrice")
+    }
+
     private fun checkoutCart() {
+        if (cartItems.isEmpty()) {
+            Toast.makeText(this, "Your cart is empty. Add items before checkout.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val intent = Intent(this, CheckoutActivity::class.java).apply {
             putExtra("userId", loggedInUserId) // Pass user ID to CheckoutActivity
         }
         startActivity(intent)
     }
-
 }

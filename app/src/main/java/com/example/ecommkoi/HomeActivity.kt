@@ -29,6 +29,10 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
+
+
+
+
         // Retrieve logged-in user ID
         loggedInUserId = intent.getIntExtra("userId", -1)
         if (loggedInUserId == -1) {
@@ -137,8 +141,19 @@ class HomeActivity : AppCompatActivity() {
                 navigateToCart()
                 true
             }
+            R.id.action_purchase_history -> {
+                navigateToPurchaseHistory()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun navigateToPurchaseHistory() {
+        val intent = Intent(this, PurchaseHistoryActivity::class.java).apply {
+            putExtra("userId", loggedInUserId)
+        }
+        startActivity(intent)
     }
 
     /** Navigate to Cart **/
