@@ -29,6 +29,17 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
+// ✅ Retrieve userId from intent
+        loggedInUserId = intent.getIntExtra("userId", -1)
+
+        if (loggedInUserId == -1) {
+            Toast.makeText(this, "Error: User not logged in.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+
+
         // Retrieve logged-in user ID
         loggedInUserId = intent.getIntExtra("userId", -1)
         if (loggedInUserId == -1) {
@@ -144,8 +155,19 @@ class HomeActivity : AppCompatActivity() {
                 navigateToCart()
                 true
             }
+            R.id.action_purchase_history -> {
+                navigateToPurchaseHistory()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun navigateToPurchaseHistory() {
+        val intent = Intent(this, PurchaseHistoryActivity::class.java).apply {
+            putExtra("userId", loggedInUserId)
+        }
+        startActivity(intent)
     }
 
     /** Navigate to Cart **/

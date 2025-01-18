@@ -7,7 +7,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.room.Room
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,6 +44,13 @@ class ProductDetailActivity : AppCompatActivity() {
             return
         }
 
+        // Validate productId and price
+        if (productId == -1 || price <= 0) {
+            Toast.makeText(this, "Error: Invalid product details.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         // Set product details
         productImage.setImageResource(imageResId)
         productName.text = name
@@ -65,21 +71,24 @@ class ProductDetailActivity : AppCompatActivity() {
             }
         }
 
-        // Initialize Room database
-        val database = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java, "ecommkoi-database"
-        ).build()
+        // Use Singleton database instance
+        val database = AppDatabase.getDatabase(applicationContext)
         val dao = database.userDao()
 
         // Handle Add to Cart button
         btnAddToCart.setOnClickListener {
-            if (productId == -1) {
-                Toast.makeText(this, "Error: Product not found.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
             val totalPrice = quantity * price // Calculate total price
-            val order = Order(userId = userId, productId = productId, quantity = quantity, totalPrice = totalPrice)
+
+            val order = Order(
+                userId = userId,  // ✅ FIXED: Replaced loggedInUserId with userId
+                productId = productId,
+                productName = name,
+                quantity = quantity,  // ✅ FIXED: Used quantity instead of selectedQuantity
+                totalPrice = totalPrice,  // ✅ FIXED: Corrected totalPrice calculation
+                orderDate = System.currentTimeMillis(),
+                status = "pending",
+                orderSessionId = System.currentTimeMillis()
+            )
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {

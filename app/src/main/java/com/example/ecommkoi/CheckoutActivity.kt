@@ -15,7 +15,6 @@ class CheckoutActivity : AppCompatActivity() {
     private lateinit var etAddress: EditText
     private lateinit var rgPaymentOptions: RadioGroup
     private lateinit var btnPlaceOrder: Button
-
     private var loggedInUserId: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,7 +53,6 @@ class CheckoutActivity : AppCompatActivity() {
             Toast.makeText(this, "Please enter your address.", Toast.LENGTH_SHORT).show()
             return
         }
-
         if (selectedPaymentMethod == null) {
             Toast.makeText(this, "Please select a payment method.", Toast.LENGTH_SHORT).show()
             return
@@ -62,31 +60,54 @@ class CheckoutActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                Log.d("CheckoutActivity", "Getting database instance...")
                 val database = AppDatabase.getDatabase(applicationContext)
-                Log.d("CheckoutActivity", "Database instance retrieved.")
+                val dao = database.userDao()
 
-                Log.d("CheckoutActivity", "Deleting orders for userId: $loggedInUserId")
-                database.userDao().deleteOrdersByUser(loggedInUserId)
-                Log.d("CheckoutActivity", "Orders deleted successfully.")
+                // ✅ Generate a unique Order Session ID (Long)
+                val orderSessionId = System.currentTimeMillis()
+
+                // ✅ Retrieve cart items
+                val cartItems = dao.getCartItemsForUser(loggedInUserId)
+
+                if (cartItems.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@CheckoutActivity, "Cart is empty.", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+
+                // ✅ Convert cart items to orders
+                val orders = cartItems.map { cartItem ->
+                    Order(
+                        userId = loggedInUserId,
+                        productId = cartItem.productId, // ✅ Ensure productId is available
+                        productName = cartItem.productName, // ✅ Add productName field
+                        quantity = cartItem.quantity,
+                        totalPrice = cartItem.quantity * cartItem.productPrice,
+                        orderDate = System.currentTimeMillis(),
+                        status = "completed", // ✅ Mark as completed instead of deleting
+                        orderSessionId = orderSessionId // ✅ Assign session ID as Long
+                    )
+                }
+
+                // ✅ Insert all orders
+                dao.insertOrders(orders)
+
+                // ✅ Instead of deleting orders, mark them as completed
+                dao.markOrdersAsCompleted(loggedInUserId)
 
                 withContext(Dispatchers.Main) {
-                    Log.d("CheckoutActivity", "Navigating to ThankYouActivity.")
-
-                    // Show success message
                     Toast.makeText(this@CheckoutActivity, "Order placed successfully!", Toast.LENGTH_LONG).show()
 
-                    // Navigate to ThankYouActivity and pass userId
+                    // ✅ Navigate to Thank You Screen
                     val intent = Intent(this@CheckoutActivity, ThankYouActivity::class.java).apply {
-                        putExtra("userId", loggedInUserId) // Pass userId
+                        putExtra("userId", loggedInUserId)
                     }
                     startActivity(intent)
 
-                    // Close CheckoutActivity
                     finish()
                 }
             } catch (e: Exception) {
-                Log.e("CheckoutActivity", "Error placing order: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@CheckoutActivity, "Error placing order: ${e.message}", Toast.LENGTH_SHORT).show()
                 }

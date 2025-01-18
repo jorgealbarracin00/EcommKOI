@@ -12,6 +12,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // IN CASE RESET IS NEEDED
+        //applicationContext.deleteDatabase("ecommkoi-database") // Reset database
+
+
         // Find the start button and set an OnClickListener
         val startButton = findViewById<Button>(R.id.startButton)
         startButton.setOnClickListener {

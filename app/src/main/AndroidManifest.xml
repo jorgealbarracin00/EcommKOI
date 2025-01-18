@@ -19,6 +19,7 @@
         <activity android:name=".CartActivity" android:exported="false" />
         <activity android:name=".CheckoutActivity" android:exported="false" />
         <activity android:name=".ThankYouActivity" android:theme="@style/Theme.EcommKOI"/>
+        <activity android:name=".PurchaseHistoryActivity"/>
 
     </application>
 </manifest>
