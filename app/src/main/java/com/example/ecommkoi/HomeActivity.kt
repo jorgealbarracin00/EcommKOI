@@ -67,9 +67,16 @@ class HomeActivity : AppCompatActivity() {
             if (existingProducts.isEmpty()) {
                 Log.d("HomeActivity", "No products found. Inserting default products...")
                 val productsToInsert = listOf(
-                    Product(1, "Toy 1", "Handmade wooden toy", 25.0, R.drawable.toy1),
-                    Product(2, "Toy 2", "Handcrafted stuffed toy", 30.0, R.drawable.toy2),
-                    Product(3, "Toy 3", "Artisanal painted toy", 20.0, R.drawable.toy3)
+                    Product(1, "Cute couple", "Handmade stuffed toy", 25.0, R.drawable.toy1),
+                    Product(2, "Fairy", "Handcrafted stuffed toy", 30.0, R.drawable.toy2),
+                    Product(3, "Elephant", "Handcrafted stuffed toy", 30.0, R.drawable.toy3),
+                    Product(4, "Lion", "Handcrafted stuffed toy", 30.0, R.drawable.toy4),
+                    Product(5, "Dragon", "Handcrafted stuffed toy", 30.0, R.drawable.toy5),
+                    Product(6, "Giraffe", "Handcrafted wooden toy", 30.0, R.drawable.toy6),
+                    Product(7, "Hedgehog", "Handcrafted wooden toy", 30.0, R.drawable.toy7),
+                    Product(8, "Unicorn", "Handcrafted wooden toy", 30.0, R.drawable.toy8),
+                    Product(9, "Fox", "Handcrafted crochet toy", 30.0, R.drawable.toy9),
+                    Product(10, "Foxy", "handcrafted crochet toy", 20.0, R.drawable.toy10)
                 )
                 dao.insertProducts(productsToInsert)
                 products = productsToInsert
