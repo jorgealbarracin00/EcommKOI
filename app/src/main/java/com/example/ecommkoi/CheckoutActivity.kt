@@ -3,6 +3,7 @@ package com.example.ecommkoi
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +16,9 @@ class CheckoutActivity : AppCompatActivity() {
     private lateinit var etAddress: EditText
     private lateinit var rgPaymentOptions: RadioGroup
     private lateinit var btnPlaceOrder: Button
+    private lateinit var creditCardLayout: LinearLayout
+    private lateinit var paypalLayout: LinearLayout
+    private lateinit var cashLayout: LinearLayout
     private var loggedInUserId: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,6 +37,32 @@ class CheckoutActivity : AppCompatActivity() {
         etAddress = findViewById(R.id.etAddress)
         rgPaymentOptions = findViewById(R.id.rgPaymentOptions)
         btnPlaceOrder = findViewById(R.id.btnPlaceOrder)
+
+        // Mock Payment Details
+        creditCardLayout = findViewById(R.id.creditCardDetailsLayout)
+        paypalLayout = findViewById(R.id.paypalDetailsLayout)
+        cashLayout = findViewById(R.id.cashDetailsLayout)
+
+        // Handle Payment Selection
+        rgPaymentOptions.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rbCreditCard -> {
+                    creditCardLayout.visibility = View.VISIBLE
+                    paypalLayout.visibility = View.GONE
+                    cashLayout.visibility = View.GONE
+                }
+                R.id.rbPayPal -> {
+                    creditCardLayout.visibility = View.GONE
+                    paypalLayout.visibility = View.VISIBLE
+                    cashLayout.visibility = View.GONE
+                }
+                R.id.rbCashOnDelivery -> {
+                    creditCardLayout.visibility = View.GONE
+                    paypalLayout.visibility = View.GONE
+                    cashLayout.visibility = View.VISIBLE
+                }
+            }
+        }
 
         // Handle Place Order button click
         btnPlaceOrder.setOnClickListener {
@@ -100,13 +130,6 @@ class CheckoutActivity : AppCompatActivity() {
                 Log.d("DatabaseDebug", "Fetching all orders after checkout...")
                 val allOrders = dao.getOrdersByUserLastSixMonths(loggedInUserId)
                 Log.d("DatabaseDebug", "Total orders in database: ${allOrders.size}")
-
-                // ✅ Check if orders exist after checkout
-                //val allOrders = dao.getAllOrders()
-                //Log.d("DatabaseDebug", "Total orders in database: ${allOrders.size}")
-                //for (order in allOrders) {
-                //    Log.d("DatabaseDebug", "Order: ${order.productName}, Status: ${order.status}")
-                //}
 
                 val newOrders = dao.getOrdersBySession(orderSessionId) // ✅ Ensure this is properly retrieved
 

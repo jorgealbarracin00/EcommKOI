@@ -58,6 +58,96 @@
                 android:text="Cash on Delivery" />
         </RadioGroup>
 
+        <!-- Credit Card Details (Initially Hidden) -->
+        <LinearLayout
+            android:id="@+id/creditCardDetailsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/etCardNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Card Number"
+                android:inputType="number"
+                android:maxLength="16"
+                android:background="@android:drawable/editbox_background"
+                android:padding="10dp" />
+
+            <EditText
+                android:id="@+id/etCardExpiry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="MM/YY"
+                android:inputType="number"
+                android:maxLength="5"
+                android:background="@android:drawable/editbox_background"
+                android:padding="10dp"
+                android:layout_marginTop="8dp" />
+
+            <EditText
+                android:id="@+id/etCardCVV"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="CVV"
+                android:inputType="numberPassword"
+                android:maxLength="3"
+                android:background="@android:drawable/editbox_background"
+                android:padding="10dp"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+
+        <!-- PayPal Details (Initially Hidden) -->
+        <LinearLayout
+            android:id="@+id/paypalDetailsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/etPaypalEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="PayPal Email Address"
+                android:inputType="textEmailAddress"
+                android:background="@android:drawable/editbox_background"
+                android:padding="10dp" />
+        </LinearLayout>
+
+        <!-- Cash on Delivery Details (Initially Hidden) -->
+        <LinearLayout
+            android:id="@+id/cashDetailsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/etCashName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Full Name"
+                android:inputType="textPersonName"
+                android:background="@android:drawable/editbox_background"
+                android:padding="10dp" />
+
+            <EditText
+                android:id="@+id/etCashContact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Contact Number"
+                android:inputType="phone"
+                android:background="@android:drawable/editbox_background"
+                android:padding="10dp"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+
         <!-- Place Order Button -->
         <Button
             android:id="@+id/btnPlaceOrder"
