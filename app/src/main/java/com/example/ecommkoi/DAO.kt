@@ -17,13 +17,15 @@ interface UserDAO {
 
     // ✅ Cart-related operations
     @Query("""
-    SELECT o.id AS orderId, o.quantity, p.id AS productId, p.name AS productName, 
-           p.price AS productPrice, p.imageResId AS productImage
-    FROM orders o
-    INNER JOIN products p ON o.productId = p.id
-    WHERE o.userId = :userId
+    SELECT orderId, userId, productId, productName, productPrice, quantity, totalPrice, orderDate, status, orderSessionId, productImage 
+    FROM orders 
+    WHERE userId = :userId 
+    AND status = 'pending'
 """)
     fun getCartItemsForUser(userId: Int): List<CartItem>
+
+    @Query("DELETE FROM orders WHERE userId = :userId AND status = 'pending'")
+    fun clearCart(userId: Int): Int // ✅ Now deletes only pending orders
 
     // ✅ Product-related operations
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -37,18 +39,19 @@ interface UserDAO {
 
     // ✅ Order-related operations
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertOrder(order: Order)
+    fun insertOrders(orders: List<Order>) // ✅ Fix: Use batch insert
 
-    @Query("DELETE FROM orders WHERE id = :orderId")
+    @Query("DELETE FROM orders WHERE orderId = :orderId")
     fun deleteOrder(orderId: Int)
 
     @Query("DELETE FROM orders WHERE userId = :userId")
     fun deleteOrdersByUser(userId: Int)
 
-    // ✅ Fix: Use correct timestamp conversion for the last 6 months
+    // ✅ Fix: Get orders from the last 6 months using UNIX timestamp
     @Query("""
-    SELECT * FROM orders
-    WHERE userId = :userId
+    SELECT orderId, userId, productId, productName, quantity, productPrice, totalPrice, orderDate, status, orderSessionId, productImage 
+    FROM orders
+    WHERE userId = :userId 
     AND orderDate >= strftime('%s', 'now', '-6 months') * 1000
     ORDER BY orderSessionId DESC, orderDate DESC
 """)
@@ -57,18 +60,20 @@ interface UserDAO {
     @Query("UPDATE orders SET status = 'completed' WHERE userId = :userId")
     fun markOrdersAsCompleted(userId: Int)
 
-    @Query("""
-        SELECT * FROM orders 
-        WHERE userId = :userId 
-        AND status = 'completed' 
-        AND orderDate >= (:currentTime - (6 * 30 * 24 * 60 * 60 * 1000))
-    """)
-    fun getPurchaseHistory(userId: Int, currentTime: Long): List<Order>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertOrders(orders: List<Order>)
+    // ✅ Fix: Use a direct time calculation instead of `strftime()`
+    @Query("SELECT * FROM orders WHERE userId = :userId AND status = 'completed' ORDER BY orderDate DESC")
+    fun getPurchaseHistory(userId: Int): List<Order>
 
     @Query("SELECT * FROM orders WHERE orderSessionId = :sessionId")
-    fun getOrdersBySession(sessionId: Long): List<Order> // ✅ Use Long
+    fun getOrdersBySession(sessionId: Long): List<Order> // ✅ Fix: Explicitly use `Long`
+
+    @Query("SELECT * FROM orders WHERE userId = :userId AND status = 'completed' ORDER BY orderDate DESC")
+    fun getDistinctOrdersByUser(userId: Int): List<Order>
+
+    @Query("SELECT * FROM orders")
+    fun getAllOrders(): List<Order> // ✅ Fix: Fetch all orders
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertOrder(order: Order)
 
 }

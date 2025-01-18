@@ -152,11 +152,17 @@ class HomeActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_cart -> {
-                navigateToCart()
+                val intent = Intent(this, CartActivity::class.java).apply {
+                    putExtra("userId", loggedInUserId) // ✅ Ensure userId is passed
+                }
+                startActivity(intent)
                 true
             }
             R.id.action_purchase_history -> {
-                navigateToPurchaseHistory()
+                val intent = Intent(this, PurchaseHistoryActivity::class.java).apply {
+                    putExtra("userId", loggedInUserId) // ✅ Ensure userId is passed
+                }
+                startActivity(intent)
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -198,4 +204,6 @@ class HomeActivity : AppCompatActivity() {
         }
         startActivity(intent)
     }
+
+
 }

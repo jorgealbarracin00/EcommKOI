@@ -63,10 +63,7 @@ class CheckoutActivity : AppCompatActivity() {
                 val database = AppDatabase.getDatabase(applicationContext)
                 val dao = database.userDao()
 
-                // ✅ Generate a unique Order Session ID (Long)
-                val orderSessionId = System.currentTimeMillis()
-
-                // ✅ Retrieve cart items
+                // ✅ Retrieve cart items before checkout
                 val cartItems = dao.getCartItemsForUser(loggedInUserId)
 
                 if (cartItems.isEmpty()) {
@@ -76,37 +73,68 @@ class CheckoutActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                // ✅ Convert cart items to orders
+                val orderSessionId = System.currentTimeMillis()
+                Log.d("CheckoutDebug", "Order session ID: $orderSessionId")
+
+                // ✅ Convert cart items into orders
                 val orders = cartItems.map { cartItem ->
                     Order(
                         userId = loggedInUserId,
-                        productId = cartItem.productId, // ✅ Ensure productId is available
-                        productName = cartItem.productName, // ✅ Add productName field
+                        productId = cartItem.productId,
+                        productName = cartItem.productName,
                         quantity = cartItem.quantity,
+                        productPrice = cartItem.productPrice, // ✅ Ensure productPrice is passed!
+                        productImage = cartItem.productImage, // ✅ Added productImage here!
                         totalPrice = cartItem.quantity * cartItem.productPrice,
                         orderDate = System.currentTimeMillis(),
-                        status = "completed", // ✅ Mark as completed instead of deleting
-                        orderSessionId = orderSessionId // ✅ Assign session ID as Long
+                        status = "completed",
+                        orderSessionId = orderSessionId
                     )
                 }
 
-                // ✅ Insert all orders
+                Log.d("CheckoutDebug", "Total orders to insert: ${orders.size}")
+
+                // ✅ Insert all orders once
                 dao.insertOrders(orders)
 
-                // ✅ Instead of deleting orders, mark them as completed
-                dao.markOrdersAsCompleted(loggedInUserId)
+                Log.d("DatabaseDebug", "Fetching all orders after checkout...")
+                val allOrders = dao.getOrdersByUserLastSixMonths(loggedInUserId)
+                Log.d("DatabaseDebug", "Total orders in database: ${allOrders.size}")
 
+                // ✅ Check if orders exist after checkout
+                //val allOrders = dao.getAllOrders()
+                //Log.d("DatabaseDebug", "Total orders in database: ${allOrders.size}")
+                //for (order in allOrders) {
+                //    Log.d("DatabaseDebug", "Order: ${order.productName}, Status: ${order.status}")
+                //}
+
+                val newOrders = dao.getOrdersBySession(orderSessionId) // ✅ Ensure this is properly retrieved
+
+                for (order in newOrders) {
+                    Log.d("CheckoutDebug", "Inserted Order: ${order.productName}, Status: ${order.status}")
+                }
+
+                // ✅ Remove all cart items after checkout
+                Log.d("CheckoutDebug", "Deleting all cart items for user: $loggedInUserId")
+                dao.clearCart(loggedInUserId)
+
+                // ✅ Ensure cart is empty
+                val remainingCartItems = dao.getCartItemsForUser(loggedInUserId)
+                Log.d("CheckoutDebug", "Cart after deletion: ${remainingCartItems.size}")
+
+                // ✅ Notify CartActivity to refresh UI
                 withContext(Dispatchers.Main) {
+                    sendBroadcast(Intent("com.example.ecommkoi.CLEAR_CART"))
                     Toast.makeText(this@CheckoutActivity, "Order placed successfully!", Toast.LENGTH_LONG).show()
 
-                    // ✅ Navigate to Thank You Screen
+                    // ✅ Redirect to Thank You Page
                     val intent = Intent(this@CheckoutActivity, ThankYouActivity::class.java).apply {
                         putExtra("userId", loggedInUserId)
                     }
                     startActivity(intent)
-
                     finish()
                 }
+
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@CheckoutActivity, "Error placing order: ${e.message}", Toast.LENGTH_SHORT).show()

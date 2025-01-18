@@ -80,13 +80,15 @@ class ProductDetailActivity : AppCompatActivity() {
             val totalPrice = quantity * price // Calculate total price
 
             val order = Order(
-                userId = userId,  // ✅ FIXED: Replaced loggedInUserId with userId
+                userId = userId,
                 productId = productId,
                 productName = name,
-                quantity = quantity,  // ✅ FIXED: Used quantity instead of selectedQuantity
-                totalPrice = totalPrice,  // ✅ FIXED: Corrected totalPrice calculation
+                quantity = quantity,
+                productPrice = price,  // ✅ Ensure this is included
+                totalPrice = quantity * price,  // ✅ Fixed total price calculation
                 orderDate = System.currentTimeMillis(),
                 status = "pending",
+                productImage = imageResId,
                 orderSessionId = System.currentTimeMillis()
             )
 

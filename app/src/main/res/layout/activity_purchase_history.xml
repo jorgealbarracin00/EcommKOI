@@ -5,16 +5,15 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/tvPurchaseHistoryTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Your Purchase History"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:layout_marginBottom="10dp"/>
+        android:layout_gravity="center_horizontal"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewPurchaseHistory"
+        android:id="@+id/rvPurchaseHistory"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="match_parent"/>
 </LinearLayout>

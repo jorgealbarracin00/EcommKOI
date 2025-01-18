@@ -1,5 +1,7 @@
 package com.example.ecommkoi
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -115,5 +117,32 @@ class CartActivity : AppCompatActivity() {
             putExtra("userId", loggedInUserId) // Pass user ID to CheckoutActivity
         }
         startActivity(intent)
+    }
+
+    private val cartClearReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            Log.d("CartDebug", "Received CLEAR_CART broadcast. Reloading cart...")
+
+            // ✅ Clear the list before fetching updated data
+            cartItems.clear()
+            cartAdapter.notifyDataSetChanged()
+            updateTotalPrice()
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val database = AppDatabase.getDatabase(applicationContext)
+                val dao = database.userDao()
+                val items = dao.getCartItemsForUser(loggedInUserId)
+
+                withContext(Dispatchers.Main) {
+                    cartItems.addAll(items)
+                    cartAdapter.notifyDataSetChanged()
+                    updateTotalPrice()
+
+                    if (cartItems.isEmpty()) {
+                        Toast.makeText(this@CartActivity, "Your cart is empty.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
     }
 }

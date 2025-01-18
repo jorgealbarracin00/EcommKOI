@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [User::class, Product::class, Order::class], version = 5)
+@Database(entities = [User::class, Order::class, Product::class], version = 9) // ✅ Increment version if needed
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDAO
 
