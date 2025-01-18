@@ -29,19 +29,9 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-// ✅ Retrieve userId from intent
+        // ✅ Retrieve userId from intent
         loggedInUserId = intent.getIntExtra("userId", -1)
 
-        if (loggedInUserId == -1) {
-            Toast.makeText(this, "Error: User not logged in.", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
-
-
-
-        // Retrieve logged-in user ID
-        loggedInUserId = intent.getIntExtra("userId", -1)
         if (loggedInUserId == -1) {
             Toast.makeText(this, "Error: User not logged in.", Toast.LENGTH_SHORT).show()
             finish()
@@ -78,16 +68,16 @@ class HomeActivity : AppCompatActivity() {
             if (existingProducts.isEmpty()) {
                 Log.d("HomeActivity", "No products found. Inserting default products...")
                 val productsToInsert = listOf(
-                    Product(1, "Cute couple", "Handmade stuffed toy", 25.0, R.drawable.toy1),
-                    Product(2, "Fairy", "Handcrafted stuffed toy", 30.0, R.drawable.toy2),
+                    Product(1, "Cute couple", "Handmade stuffed toy", 28.0, R.drawable.toy1),
+                    Product(2, "Fairy", "Handcrafted stuffed toy", 40.0, R.drawable.toy2),
                     Product(3, "Elephant", "Handcrafted stuffed toy", 30.0, R.drawable.toy3),
-                    Product(4, "Lion", "Handcrafted stuffed toy", 30.0, R.drawable.toy4),
-                    Product(5, "Dragon", "Handcrafted stuffed toy", 30.0, R.drawable.toy5),
-                    Product(6, "Giraffe", "Handcrafted wooden toy", 30.0, R.drawable.toy6),
-                    Product(7, "Hedgehog", "Handcrafted wooden toy", 30.0, R.drawable.toy7),
-                    Product(8, "Unicorn", "Handcrafted wooden toy", 30.0, R.drawable.toy8),
-                    Product(9, "Fox", "Handcrafted crochet toy", 30.0, R.drawable.toy9),
-                    Product(10, "Foxy", "handcrafted crochet toy", 20.0, R.drawable.toy10)
+                    Product(4, "Lion", "Handcrafted stuffed toy", 60.0, R.drawable.toy4),
+                    Product(5, "Dragon", "Handcrafted stuffed toy", 80.0, R.drawable.toy5),
+                    Product(6, "Giraffe", "Handcrafted wooden toy", 40.0, R.drawable.toy6),
+                    Product(7, "Hedgehog", "Handcrafted wooden toy", 32.0, R.drawable.toy7),
+                    Product(8, "Unicorn", "Handcrafted wooden toy", 34.0, R.drawable.toy8),
+                    Product(9, "Fox", "Handcrafted crochet toy", 62.0, R.drawable.toy9),
+                    Product(10, "Foxy", "Handcrafted crochet toy", 18.0, R.drawable.toy10)
                 )
                 dao.insertProducts(productsToInsert)
                 products = productsToInsert
@@ -129,7 +119,7 @@ class HomeActivity : AppCompatActivity() {
         }
 
         view.findViewById<Button>(R.id.btnFilterByCategory).setOnClickListener {
-            Toast.makeText(this, "Filtered by Category", Toast.LENGTH_SHORT).show()
+            showCategoryFilterDialog() // ✅ Implemented method for category filtering
             bottomSheetDialog.dismiss()
         }
 
@@ -141,6 +131,27 @@ class HomeActivity : AppCompatActivity() {
 
         bottomSheetDialog.setContentView(view)
         bottomSheetDialog.show()
+    }
+
+    /** Show Category Filter Dialog **/
+    private fun showCategoryFilterDialog() {
+        val categories = products.map { it.description }.distinct() // ✅ Extract unique descriptions
+
+        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+        builder.setTitle("Filter by Category")
+        builder.setItems(categories.toTypedArray()) { _, which ->
+            val selectedCategory = categories[which]
+            filterProductsByCategory(selectedCategory)
+        }
+        builder.show()
+    }
+
+    /** Filter Products by Selected Category **/
+    private fun filterProductsByCategory(category: String) {
+        val filteredProducts = products.filter { it.description == category } // ✅ Filter locally
+
+        updateRecyclerView(filteredProducts)
+        Toast.makeText(this, "Filtered by: $category", Toast.LENGTH_SHORT).show()
     }
 
     /** Handle Menu Options **/
@@ -204,6 +215,4 @@ class HomeActivity : AppCompatActivity() {
         }
         startActivity(intent)
     }
-
-
 }
